@@ -15,6 +15,8 @@ pub struct AES {
 #[wasm_bindgen]
 impl AES {
     pub fn with_ecdh(sk: &[u8], pk: &[u8]) -> Self {
+        utils::set_panic_hook();
+
         assert_eq!(sk.len(), 32);
         assert_eq!(pk.len(), 65);
 
