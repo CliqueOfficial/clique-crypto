@@ -1,7 +1,6 @@
 [package]
 name = "clique-crypto"
 version = "0.1.0"
-authors = ["Alan WANG <alan1995wang@outlook.com>"]
 edition = "2018"
 
 [lib]
