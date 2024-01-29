@@ -25,15 +25,9 @@ jobs:
       - run: cargo make build
 
       - if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')
-        uses: JS-DevTools/npm-publish@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          registry: https://npm.pkg.github.com/
-          package: pkg
-          tag: latest
+        run: sed -i 's/"version": "[^"]*"/"version": "next"/g' pkg/package.json
 
-      - if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        uses: JS-DevTools/npm-publish@v3
+      - uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           registry: https://npm.pkg.github.com/
