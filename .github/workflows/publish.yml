@@ -14,8 +14,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: ATiltedTree/setup-rust@v1
       - uses: actions-rs/toolchain@v1
+        with:
+            toolchain: nightly-2024-01-17
+            target: wasm32-unknown-unknown
+            override: true
       - uses: davidB/rust-cargo-make@v1
 
       - run: cargo install wasm-pack
