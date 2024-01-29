@@ -4,4 +4,4 @@ args = ["test", "--headless", "--firefox"]
 
 [tasks.build]
 command = "wasm-pack"
-args = ["build", "--target", "web", "--scope", "cliqueofficial"]
+args = ["build", "--scope", "cliqueofficial"]
