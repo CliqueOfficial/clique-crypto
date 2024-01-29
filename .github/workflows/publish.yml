@@ -22,7 +22,8 @@ jobs:
       - run: cargo install wasm-pack
       - run: cargo make build
 
-      - uses: JS-DevTools/npm-publish@v3
+      - id: publish
+        uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           registry: https://npm.pkg.github.com/
