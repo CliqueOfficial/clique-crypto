@@ -1,0 +1,10 @@
+[tasks.test]
+install_crate = "wasm-pack"
+command = "wasm-pack"
+args = ["test", "--headless", "--firefox"]
+
+[tasks.build]
+install_crate = "wasm-pack"
+command = "wasm-pack"
+args = ["build"]
+
