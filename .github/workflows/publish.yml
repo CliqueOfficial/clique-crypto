@@ -25,7 +25,8 @@ jobs:
       - run: cargo make build
 
       - if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')
-        run: sed -i 's/"version": "[^"]*"/"version": "next"/g' pkg/package.json
+        run: |
+          sed -i 's/"version": "[^"]*"/"version": "next"/g' pkg/package.json
 
       - uses: JS-DevTools/npm-publish@v3
         with:
