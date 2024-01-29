@@ -1,10 +1,6 @@
 [tasks.test]
-install_crate = "wasm-pack"
 command = "wasm-pack"
 args = ["test", "--headless", "--firefox"]
-
-[tasks.init]
-script = ["cargo install wasm-pack"]
 
 [tasks.build]
 command = "wasm-pack"
