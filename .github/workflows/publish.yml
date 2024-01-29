@@ -26,7 +26,7 @@ jobs:
 
       - if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')
         run: |
-          sed -i 's/"version": "[^"]*"/"version": "next"/g' pkg/package.json
+          sed -i 's/"version": "[^"]*"/"version": "latest"/g' pkg/package.json
 
       - uses: JS-DevTools/npm-publish@v3
         with:
