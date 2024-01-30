@@ -10,8 +10,6 @@ use wasm_bindgen_test::*;
 
 use clique_crypto::shamir::Shamir;
 
-use k256::{elliptic_curve::sec1::ToEncodedPoint, SecretKey};
-
 wasm_bindgen_test_configure!(run_in_browser);
 
 #[wasm_bindgen_test]
