@@ -56,7 +56,7 @@ impl AES {
             Ok(v) => v.to_vec(),
             Err(err) => {
                 return Err(JsValue::from(err.to_string()));
-            },
+            }
         };
         assert_eq!(nonce.len(), 12);
         let nonce = Nonce::<Aes256Gcm>::from_slice(&nonce);
