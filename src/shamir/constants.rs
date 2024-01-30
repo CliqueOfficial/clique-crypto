@@ -1,9 +1,9 @@
-pub(crate) const FIELD_BITS: usize = 8; // number of bits to use, GF(2^8)
+pub(crate) const FIELD_BITS: u8 = 8; // number of bits to use, GF(2^8)
 pub(crate) const MAX_SHARES: u8 = 255; //2^8 - 1
 
 // We generate these logarithm and exponent lookup tables since all operations happen within the Galois Field and we will
 // do these calculations tens of thousands of times (or more) during this process. Much faster to lookup this data.
-pub(crate) const calculatedLogarithms: [u8; 255] = [
+pub(crate) const CALCULATED_LOGARITHMS: [u8; 255] = [
     255, 1, 25, 2, 50, 26, 198, 3, 223, 51, 238, 27, 104, 199, 75, 4, 100, 224, 14, 52, 141, 239,
     129, 28, 193, 105, 248, 200, 8, 76, 113, 5, 138, 101, 47, 225, 36, 15, 33, 53, 147, 142, 218,
     240, 18, 130, 69, 29, 181, 194, 125, 106, 39, 249, 185, 201, 154, 9, 120, 77, 228, 114, 166, 6,

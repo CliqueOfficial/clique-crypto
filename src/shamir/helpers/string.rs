@@ -1,7 +1,7 @@
 use crate::shamir::constants::FIELD_BITS;
 
-fn binary_to_u8(data: &str) -> Result<u8, String> {
-    match u8::from_str_radix(data, 2) {
+pub(crate) fn str_to_u8(data: &str, radix: u32) -> Result<u8, String> {
+    match u8::from_str_radix(data, radix) {
         Ok(v) => Ok(v),
         _ => Err(format!("Invalid binary character: `{}`.", data)),
     }
@@ -28,7 +28,7 @@ pub(crate) fn binary_to_hex(data: &str) -> Result<String, String> {
     let binary = pad_left(data, 4);
     let mut i = binary.len();
     while i >= 4 {
-        let num = binary_to_u8(&binary[(i - 4)..i])?;
+        let num = str_to_u8(&binary[(i - 4)..i], 2)?;
         i -= 4;
         hex = format!("{:x}", num) + &hex;
     }
@@ -43,12 +43,12 @@ pub(crate) fn split_binary(data: &str, pad_length: Option<usize>) -> Result<Vec<
     };
 
     let mut i = binary.len();
-    while i > FIELD_BITS {
-        let num = binary_to_u8(&binary[(i - FIELD_BITS)..i])?;
-        i -= FIELD_BITS;
+    while i > FIELD_BITS.into() {
+        let num = str_to_u8(&binary[(i - FIELD_BITS as usize)..i], 2)?;
+        i -= FIELD_BITS as usize;
         result.push(num);
     }
-    result.push(binary_to_u8(&binary[..i])?);
+    result.push(str_to_u8(&binary[..i], 2)?);
     Ok(result)
 }
 
