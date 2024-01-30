@@ -51,9 +51,15 @@ impl AES {
     }
 
     #[wasm_bindgen]
-    pub fn encrypt(&self, data: &[u8], nonce: &[u8]) -> Result<Vec<u8>, JsValue> {
+    pub fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, JsValue> {
+        let nonce = match utils::get_random_buf() {
+            Ok(v) => v.to_vec(),
+            Err(err) => {
+                return Err(JsValue::from(err.to_string()));
+            },
+        };
         assert_eq!(nonce.len(), 12);
-        let nonce = Nonce::<Aes256Gcm>::from_slice(nonce);
+        let nonce = Nonce::<Aes256Gcm>::from_slice(&nonce);
         match self.inner.encrypt(nonce, data) {
             Ok(v) => Ok([nonce, v.as_slice()].concat()),
             Err(err) => Err(JsValue::from(err.to_string())),

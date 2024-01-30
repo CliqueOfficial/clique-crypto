@@ -22,13 +22,13 @@ fn with_ecdh() {
         pk.to_encoded_point(false).as_bytes(),
     );
 
-    let data = aes.encrypt(b"hello world", b"123456789012").unwrap();
+    let data = aes.encrypt(b"hello world").unwrap();
     assert_eq!(b"hello world".to_vec(), aes.decrypt(&data).unwrap());
 }
 
 #[wasm_bindgen_test]
 fn with_password() {
     let aes = AES::with_password("12345678");
-    let data = aes.encrypt(b"hello world", b"123456789012").unwrap();
+    let data = aes.encrypt(b"hello world").unwrap();
     assert_eq!(b"hello world".to_vec(), aes.decrypt(&data).unwrap());
 }
