@@ -8,3 +8,11 @@ pub fn set_panic_hook() {
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
 }
+
+pub fn get_random_buf(size: usize) -> Result<Vec<u8>, String> {
+    let mut buf = vec![0u8; size];
+    match getrandom::getrandom(&mut buf) {
+        Ok(_) => Ok(buf),
+        Err(err) => Err(err.to_string()),
+    }
+}
