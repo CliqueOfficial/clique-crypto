@@ -1,3 +1,8 @@
+use crate::shamir::{
+    constants::FIELD_BITS,
+    helpers::crypto::{calculate_fo_fx, get_random_binary},
+};
+
 use super::string::str_to_u8;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -6,11 +11,42 @@ pub(crate) struct ShareComponent {
     pub(crate) data: String,
 }
 
+#[derive(PartialEq, Clone, Debug)]
+pub(crate) struct SharePoint {
+    pub(crate) x: u8,
+    pub(crate) y: u8,
+}
+
 pub(crate) fn extract_share_component(share: &str) -> Result<ShareComponent, String> {
     Ok(ShareComponent {
         id: str_to_u8(&share[..2], 16)?,
         data: share[2..].to_owned(),
     })
+}
+
+pub(crate) fn calculate_randomized_shares(
+    secret: u8,
+    total_shares: u8,
+    required_shares: u8,
+) -> Result<Vec<SharePoint>, String> {
+    let mut shares: Vec<SharePoint> = vec![];
+    let mut coefficients: Vec<u8> = vec![secret];
+
+    for _ in 1..required_shares {
+        coefficients.push(str_to_u8(&get_random_binary(FIELD_BITS)?, 2)?)
+    }
+
+    let mut i = 1u8;
+    let len = total_shares + 1;
+    while i < len {
+        shares.push(SharePoint {
+            x: i,
+            y: calculate_fo_fx(i, &coefficients),
+        });
+        i += 1;
+    }
+
+    Ok(shares)
 }
 
 #[cfg(test)]

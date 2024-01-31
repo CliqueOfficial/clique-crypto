@@ -1,4 +1,9 @@
-use crate::shamir::constants::{CALCULATED_EXPONENTS, CALCULATED_LOGARITHMS, MAX_SHARES};
+use crate::{
+    shamir::constants::{CALCULATED_EXPONENTS, CALCULATED_LOGARITHMS, MAX_SHARES},
+    utils::get_random_buf,
+};
+
+use super::string::{pad_left, str_to_u8};
 
 pub(crate) fn calculate_fo_fx(x: u8, coefficients: &[u8]) -> u8 {
     let log_x = CALCULATED_LOGARITHMS[x as usize - 1] as i32;
@@ -34,6 +39,24 @@ pub(crate) fn lagrange(x: &[u8], y: &[u8]) -> u8 {
         }
     }
     sum
+}
+
+pub(crate) fn get_random_binary(bits: u8) -> Result<String, String> {
+    let buf_size = (bits as f32 / 8f32).ceil() as usize;
+    let mut result = String::from("");
+    loop {
+        let binary = hex::encode(get_random_buf(buf_size)?);
+        let len = binary.len() - 1;
+        let mut i: usize = 0;
+        while i < len || result.len() < bits.into() {
+            result += &pad_left(&format!("{:b}", str_to_u8(&binary[i..i + 1], 16)?), 4);
+            i += 1;
+        }
+        result = result[(result.len() - bits as usize)..].to_string();
+        if result.find('1').is_some() {
+            return Ok(result);
+        }
+    }
 }
 
 #[cfg(test)]

@@ -4,10 +4,10 @@ mod constants;
 mod helpers;
 
 use crate::shamir::{
-    constants::FIELD_BITS,
+    constants::{FIELD_BITS, MAX_SHARES},
     helpers::{
         crypto::lagrange,
-        share::extract_share_component,
+        share::{calculate_randomized_shares, extract_share_component},
         string::{binary_to_hex, hex_to_binary, pad_left, split_binary},
     },
 };
@@ -19,6 +19,63 @@ pub struct Shamir {}
 
 #[wasm_bindgen]
 impl Shamir {
+    #[wasm_bindgen(js_name = generateShares)]
+    pub fn generate_shares(
+        secret: &[u8],
+        total_shares: u8,
+        required_shares: u8,
+    ) -> Result<Vec<String>, String> {
+        if total_shares < 2 {
+            return Err(format!(
+                "Number of shares must be an integer between 2 and 2^bits-1 ({}), inclusive.",
+                MAX_SHARES
+            ));
+        }
+
+        if required_shares < 2 {
+            return Err(format!(
+                "Threshold number of shares must be an integer between 2 and 2^bits-1 ({}), inclusive.",
+                MAX_SHARES
+            ));
+        }
+
+        if required_shares > total_shares {
+            return Err(format!(
+                "Threshold number of shares was {} but must be less than or equal to the {} shares specified as the total to generate.", required_shares, 
+                total_shares
+            ));
+        }
+
+        let secrets = split_binary(
+            &format!("1{}", hex_to_binary(&hex::encode(secret))?),
+            Some(128),
+        )?;
+        let mut x = vec!["".to_string(); total_shares as usize];
+        let mut y = vec!["".to_string(); total_shares as usize];
+
+        // For each character in the secret integer array, generate `total_shares` sub-shares,
+        // concatenating each sub-share `i` to create a total of `total_shares` outputs
+        for secret in &secrets {
+            let sub_shares = calculate_randomized_shares(*secret, total_shares, required_shares)?;
+            for i in 0..(total_shares as usize) {
+                if x[i].is_empty() {
+                    x[i] = format!("{:x}", sub_shares[i].x);
+                }
+                y[i] = format!(
+                    "{}{}",
+                    pad_left(&format!("{:b}", sub_shares[i].y), FIELD_BITS as usize),
+                    y[i]
+                );
+            }
+        }
+        // Creates the final share strings which contain the share's id and the data allocated to the share
+        for i in 0..(total_shares as usize) {
+            let share_id = pad_left(&x[i], 2);
+            x[i] = format!("{}{}", share_id, binary_to_hex(&y[i])?);
+        }
+        Ok(x)
+    }
+
     #[wasm_bindgen(js_name = recoverSecret)]
     pub fn recover_secret(shares: Vec<String>) -> Result<Vec<u8>, String> {
         // Here we split each share's hexadecimal data into an array of integers. We then copy each item at position `j` for each share into
