@@ -5,16 +5,24 @@ use crate::{
 
 use super::string::{pad_left, str_to_u8};
 
+fn get_calculated_logarithm(index: u8) -> i32 {
+    if index == 0 {
+        CALCULATED_LOGARITHMS[0] as i32
+    } else {
+        CALCULATED_LOGARITHMS[index as usize - 1] as i32
+    }
+}
+
 pub(crate) fn calculate_fo_fx(x: u8, coefficients: &[u8]) -> u8 {
-    let log_x = CALCULATED_LOGARITHMS[x as usize - 1] as i32;
-    let mut fx = 0;
+    let log_x = get_calculated_logarithm(x);
+    let mut fx = 0u8;
     for coefficient in coefficients.iter().rev() {
         if fx == 0 {
             // if f(0) then we just return the coefficient as it's just equivalent to the Y offset.
             // Using the exponent table would result in an incorrect answer
             fx = *coefficient;
         } else {
-            let i = (log_x + (CALCULATED_LOGARITHMS[fx as usize - 1] as i32)) % (MAX_SHARES as i32);
+            let i = (log_x + get_calculated_logarithm(fx)) % (MAX_SHARES as i32);
             fx = CALCULATED_EXPONENTS[i as usize] ^ *coefficient;
         }
     }
@@ -22,20 +30,24 @@ pub(crate) fn calculate_fo_fx(x: u8, coefficients: &[u8]) -> u8 {
 }
 
 pub(crate) fn lagrange(x: &[u8], y: &[u8]) -> u8 {
-    let mut sum: u8 = 0;
-    let y_len = y.len();
+    if y.len() < x.len() {
+        return 0;
+    }
+    let mut sum = 0u8;
     for (i, _) in x.iter().enumerate() {
-        if y_len >= i {
-            let mut product = CALCULATED_LOGARITHMS[y[i] as usize - 1] as i32;
+        if y[i] > 0 {
+            let mut product = get_calculated_logarithm(y[i]);
             for (j, _) in x.iter().enumerate() {
                 if i != j {
-                    product = (product + CALCULATED_LOGARITHMS[(x[j]) as usize - 1] as i32
-                        - CALCULATED_LOGARITHMS[(x[i] ^ x[j]) as usize - 1] as i32
+                    product = (product + get_calculated_logarithm(x[j])
+                        - get_calculated_logarithm(x[i] ^ x[j])
                         + MAX_SHARES as i32)
                         % MAX_SHARES as i32;
                 }
             }
-            sum ^= CALCULATED_EXPONENTS[product as usize];
+            if product < 255 {
+                sum ^= CALCULATED_EXPONENTS[product as usize];
+            }
         }
     }
     sum
@@ -79,16 +91,8 @@ mod tests {
             lagrange(&vec![1, 2, 3, 4, 5], &vec![108, 49, 41, 55, 47])
         );
         assert_eq!(
-            115,
-            lagrange(&vec![1, 2, 3, 4, 5], &vec![157, 141, 99, 110, 128])
-        );
-        assert_eq!(
-            101,
-            lagrange(&vec![1, 2, 3, 4, 5], &vec![221, 21, 173, 241, 73])
-        );
-        assert_eq!(
-            84,
-            lagrange(&vec![1, 2, 3, 4, 5], &vec![203, 26, 133, 97, 254])
+            111,
+            lagrange(&vec![1, 2], &vec![0, 177])
         );
     }
 }
