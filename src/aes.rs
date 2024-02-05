@@ -21,14 +21,14 @@ impl AES {
     #[wasm_bindgen(js_name = withECDH)]
     pub fn with_ecdh(priv_key: &[u8], pub_key: &[u8]) -> Self {
         utils::set_panic_hook();
-
         assert_eq!(priv_key.len(), 32);
-        assert_eq!(pub_key.len(), 65);
-
         let priv_key = SecretKey::from_slice(priv_key).unwrap();
-        let point = EncodedPoint::from_bytes(pub_key).unwrap();
-        let pub_key = PublicKey::from_encoded_point(&point).unwrap();
-
+        let pub_key = if pub_key.len() == 33 {
+            PublicKey::from_sec1_bytes(pub_key).unwrap()
+        } else {
+            let point = EncodedPoint::from_bytes(pub_key).unwrap();
+            PublicKey::from_encoded_point(&point).unwrap()
+        };
         let shared_secrets = diffie_hellman(&priv_key.to_nonzero_scalar(), pub_key.as_affine());
         let mut key = Key::<Aes256Gcm>::default();
         shared_secrets
