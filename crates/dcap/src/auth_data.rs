@@ -4,8 +4,9 @@ use anyhow::{anyhow, Result};
 use der::{Decode, Encode};
 use p256::ecdsa::Signature;
 use sha2::{digest::Digest, Sha256};
+use x509_cert::Certificate;
 
-use crate::signature::{verify_signature, VerifyingKey};
+use crate::signature::{verify_signature, EcdsaParams, VerifyingKey};
 
 use super::{
     cert::PCK,
@@ -45,6 +46,17 @@ impl BinRepr for QECertData {
         bytes.extend_from_slice(&(self.cert_data.len() as u32).to_le_bytes());
         bytes.extend_from_slice(&self.cert_data);
         Ok(bytes)
+    }
+}
+
+impl QECertData {
+    pub fn certs(&self) -> Result<[Certificate; 3]> {
+        let ret = pem::parse_many(&self.cert_data)?
+            .iter()
+            .map(|pem| Ok(Certificate::from_der(pem.contents())?))
+            .collect::<Result<Vec<_>>>()?;
+        ret.try_into()
+            .map_err(|_| anyhow!("Should be exact 3 certificates."))
     }
 }
 
@@ -105,10 +117,10 @@ impl BinRepr for ECDSAQuoteV3AuthData {
 }
 
 impl Verifiable for ECDSAQuoteV3AuthData {
-    type Output = ();
+    type Output = [EcdsaParams; 4];
     type Payload = Vec<u8>;
 
-    fn verify(&self, payload: &Self::Payload) -> Result<Self::Output> {
+    fn verify(&self, payload: &Self::Payload) -> Result<()> {
         // STEP3: Verify the Enclave ID
         let qe_report = self.qe_report();
         let enclave_id = EnclaveId::get();
@@ -138,18 +150,8 @@ impl Verifiable for ECDSAQuoteV3AuthData {
         }
 
         // STEP4: Parse quote cert  chain
-        let (root, ca, pck) = {
-            let mut pems = pem::parse_many(&self.qe_cert.cert_data)?
-                .iter()
-                .map(|pem| x509_cert::Certificate::from_der(pem.contents()))
-                .collect::<Result<Vec<_>, _>>()?;
-
-            (
-                pems.pop().unwrap(),
-                pems.pop().unwrap(),
-                PCK::new(pems.pop().unwrap()),
-            )
-        };
+        let [pck, ca, root] = self.qe_cert.certs()?;
+        let pck = PCK::new(pck);
 
         //STEP5: pck check
         let tcb_info = TcbInfo::get();
@@ -217,6 +219,40 @@ impl Verifiable for ECDSAQuoteV3AuthData {
         )?;
 
         Ok(())
+    }
+
+    fn paramlized(&self, payload: &Self::Payload) -> Result<Self::Output> {
+        let [pck, ca, root] = self.qe_cert.certs()?;
+        Ok([
+            (
+                VerifyingKey::from_spki(&root.tbs_certificate.subject_public_key_info)?,
+                Signature::from_der(ca.signature.raw_bytes())
+                    .unwrap()
+                    .to_bytes(),
+                ca.tbs_certificate.to_der().unwrap(),
+            )
+                .into(),
+            (
+                VerifyingKey::from_spki(&ca.tbs_certificate.subject_public_key_info)?,
+                Signature::from_der(pck.signature.raw_bytes())
+                    .unwrap()
+                    .to_bytes(),
+                pck.tbs_certificate.to_der().unwrap(),
+            )
+                .into(),
+            (
+                VerifyingKey::from_spki(&pck.tbs_certificate.subject_public_key_info)?,
+                self.qe_report_signature,
+                self.raw_qe_report,
+            )
+                .into(),
+            (
+                VerifyingKey::from_untagged_bytes(self.ecdsa_attestation_key)?,
+                self.ecdsa256_bit_signature,
+                payload.as_slice(),
+            )
+                .into(),
+        ])
     }
 }
 

@@ -16,6 +16,45 @@ where
     Ok(())
 }
 
+pub struct EcdsaParams {
+    pub vk: [u8; 65],
+    pub signature: [u8; 64],
+    pub msghash: [u8; 32],
+}
+
+impl std::fmt::Debug for EcdsaParams {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "EcdsaParams {{\n  vk: 0x{},\n  signature: 0x{},\n  msghash: 0x{},\n}}",
+            hex::encode(self.vk),
+            hex::encode(self.signature),
+            hex::encode(self.msghash),
+        )
+    }
+}
+
+impl std::fmt::Display for EcdsaParams {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut ret = vec![];
+        ret.extend_from_slice(&self.vk);
+        ret.extend_from_slice(&self.signature);
+        ret.extend_from_slice(&self.msghash);
+        let out = hex::encode(ret);
+        write!(f, "{}", out)
+    }
+}
+
+impl<R: AsRef<[u8]>, N: AsRef<[u8]>> From<(VerifyingKey, R, N)> for EcdsaParams {
+    fn from((vk, sig, message): (VerifyingKey, R, N)) -> Self {
+        Self {
+            vk: vk.to_bytes().try_into().unwrap(),
+            signature: sig.as_ref().try_into().unwrap(),
+            msghash: Sha256::digest(message.as_ref()).into(),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct VerifyingKey(pub p256::ecdsa::VerifyingKey);
 
