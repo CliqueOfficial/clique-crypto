@@ -25,10 +25,7 @@ fn with_ecdh() {
     let data = aes.encrypt(b"hello world").unwrap();
     assert_eq!(b"hello world".to_vec(), aes.decrypt(&data).unwrap());
 
-    let aes = AES::with_ecdh(
-        sk.to_bytes().as_slice(),
-        pk.to_sec1_bytes().as_ref(),
-    );
+    let aes = AES::with_ecdh(sk.to_bytes().as_slice(), pk.to_sec1_bytes().as_ref());
     let data = aes.encrypt(b"hello world").unwrap();
     assert_eq!(b"hello world".to_vec(), aes.decrypt(&data).unwrap());
 }

@@ -90,9 +90,6 @@ mod tests {
             116,
             lagrange(&vec![1, 2, 3, 4, 5], &vec![108, 49, 41, 55, 47])
         );
-        assert_eq!(
-            111,
-            lagrange(&vec![1, 2], &vec![0, 177])
-        );
+        assert_eq!(111, lagrange(&vec![1, 2], &vec![0, 177]));
     }
 }

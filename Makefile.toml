@@ -1,7 +1,17 @@
-[tasks.test]
+[tasks.pack]
+workspace = false
+command = "wasm-pack"
+args = [
+  "build",
+  "binding",
+  "--release",
+  "--out-dir",
+  "../pkg",
+  "--scope",
+  "cliqueofficial",
+]
+
+[tasks.test-browser]
+workspace = false
 command = "wasm-pack"
 args = ["test", "--headless", "--firefox"]
-
-[tasks.build]
-command = "wasm-pack"
-args = ["build", "--scope", "cliqueofficial"]
