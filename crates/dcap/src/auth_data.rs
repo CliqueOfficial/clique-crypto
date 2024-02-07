@@ -4,6 +4,7 @@ use anyhow::{anyhow, Result};
 use der::{Decode, Encode};
 use p256::ecdsa::Signature;
 use sha2::{digest::Digest, Sha256};
+use x509_cert::Certificate;
 
 use crate::signature::{verify_signature, VerifyingKey};
 
@@ -45,6 +46,17 @@ impl BinRepr for QECertData {
         bytes.extend_from_slice(&(self.cert_data.len() as u32).to_le_bytes());
         bytes.extend_from_slice(&self.cert_data);
         Ok(bytes)
+    }
+}
+
+impl QECertData {
+    pub fn certs(&self) -> Result<[Certificate; 3]> {
+        let ret = pem::parse_many(&self.cert_data)?
+            .iter()
+            .map(|pem| Ok(Certificate::from_der(pem.contents())?))
+            .collect::<Result<Vec<_>>>()?;
+        ret.try_into()
+            .map_err(|_| anyhow!("Should be exact 3 certificates."))
     }
 }
 
@@ -138,18 +150,8 @@ impl Verifiable for ECDSAQuoteV3AuthData {
         }
 
         // STEP4: Parse quote cert  chain
-        let (root, ca, pck) = {
-            let mut pems = pem::parse_many(&self.qe_cert.cert_data)?
-                .iter()
-                .map(|pem| x509_cert::Certificate::from_der(pem.contents()))
-                .collect::<Result<Vec<_>, _>>()?;
-
-            (
-                pems.pop().unwrap(),
-                pems.pop().unwrap(),
-                PCK::new(pems.pop().unwrap()),
-            )
-        };
+        let [pck, ca, root] = self.qe_cert.certs()?;
+        let pck = PCK::new(pck);
 
         //STEP5: pck check
         let tcb_info = TcbInfo::get();
