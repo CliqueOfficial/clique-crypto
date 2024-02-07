@@ -10,5 +10,9 @@ pub trait Verifiable {
     type Payload;
     type Output;
 
-    fn verify(&self, payload: &Self::Payload) -> Result<Self::Output>;
+    fn verify(&self, payload: &Self::Payload) -> Result<()>;
+
+    fn paramlized(&self, payload: &Self::Payload) -> Result<Self::Output> {
+        unimplemented!()
+    }
 }

@@ -142,7 +142,7 @@ impl Verifiable for EnclaveReport {
     type Output = ();
     type Payload = Option<(Vec<RawEnclaveId>, Vec<RawSigner>)>;
 
-    fn verify(&self, payload: &Self::Payload) -> Result<Self::Output> {
+    fn verify(&self, payload: &Self::Payload) -> Result<()> {
         if payload.is_none() {
             return Ok(());
         }
@@ -222,7 +222,7 @@ where
     Sig: Verifiable<Payload = Vec<u8>>,
 {
     type Payload = ();
-    type Output = ();
+    type Output = Sig::Output;
 
     fn verify(&self, _: &Self::Payload) -> Result<()> {
         // STEP1: parse and verify header
@@ -236,6 +236,11 @@ where
         self.signature.verify(&raw_quote_body)?;
 
         Ok(())
+    }
+
+    fn paramlized(&self, _: &Self::Payload) -> Result<Self::Output> {
+        let raw_quote_body = self.body.to_bytes()?;
+        self.signature.paramlized(&raw_quote_body)
     }
 }
 
