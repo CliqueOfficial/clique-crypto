@@ -1,4 +1,4 @@
-# Clqiue-Crypto
+# Clique-Crypto
 
 ## Overview
 
