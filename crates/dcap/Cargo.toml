@@ -19,4 +19,4 @@ signature = "2.2.0"
 x509-cert = "0.2.5"
 
 [dev-dependencies]
-base64 = "0.21.7"
+base64 = "0.22.1"
